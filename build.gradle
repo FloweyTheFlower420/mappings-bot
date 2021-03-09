@@ -9,6 +9,16 @@ mainClassName = 'com.floweytf.mappings.Main'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+Properties props = new Properties()
+def propFile = file('token.properties')
+def token = ""
+if (propFile.canRead()){
+    props.load(new FileInputStream(propFile))
+
+    if (props!=null && props.containsKey('token')) {
+        token = props['token']
+    }
+}
 
 repositories {
     mavenCentral()
@@ -29,6 +39,9 @@ task fatJar(type: Jar) {
     with jar
 }
 
+run {
+    args += token
+}
 
 jar.dependsOn(fatJar)
 run.dependsOn(jar);
@@ -38,6 +51,11 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
     implementation 'net.dv8tion:JDA:4.2.0_240'
     compile project(":logger")
-    compile 'com.google.code.gson:gson:2.6.2'
-    compile 'commons-cli:commons-cli:1.4'
+    implementation 'com.google.code.gson:gson:2.6.2'
+    implementation 'commons-cli:commons-cli:1.4'
+    implementation 'com.google.guava:guava:21.0'
+    compileOnly 'org.projectlombok:lombok:1.18.16'
+    annotationProcessor 'org.projectlombok:lombok:1.18.16'
+    testCompileOnly 'org.projectlombok:lombok:1.18.16'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
 }
