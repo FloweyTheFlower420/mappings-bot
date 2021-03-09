@@ -1,0 +1,12 @@
+{
+  "tsrg": [
+    {
+      "mcversion": "1.16.3",
+      "mapping": "forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16.3/joined.tsrg"
+    },
+    {
+
+    }
+  ]
+}

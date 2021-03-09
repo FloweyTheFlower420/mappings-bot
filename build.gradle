@@ -12,6 +12,7 @@ targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 
@@ -35,7 +36,7 @@ run.dependsOn(jar);
 dependencies {
     compile 'org.jetbrains:annotations:20.1.0'
     testCompile group: 'junit', name: 'junit', version: '4.11'
-    compile 'net.dv8tion:JDA:1.2.2_139'
+    implementation 'net.dv8tion:JDA:4.2.0_240'
     compile project(":logger")
     compile 'com.google.code.gson:gson:2.6.2'
     compile 'commons-cli:commons-cli:1.4'
