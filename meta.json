@@ -1,8 +1,76 @@
 {
   "tsrg": [
     {
+      "type": "1.12.2-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.12.2/joined.tsrg"
+    },
+    {
+      "type": "1.13.1-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.13.1/joined.tsrg"
+    },
+    {
+      "type": "1.13.2-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.13.2/joined.tsrg"
+    },
+    {
+      "type": "1.13-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.13/joined.tsrg"
+    },
+    {
+      "type": "1.14.1-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.14.1/joined.tsrg"
+    },
+    {
+      "type": "1.14.2-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.14.2/joined.tsrg"
+    },
+    {
+      "type": "1.14.3-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.14.3/joined.tsrg"
+    },
+    {
+      "type": "1.14.4-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.14.4/joined.tsrg"
+    },
+    {
+      "type": "1.14-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.14/joined.tsrg"
+    },
+    {
+      "type": "1.15.1-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.15.1/joined.tsrg"
+    },
+    {
+      "type": "1.15.2-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.15.2/joined.tsrg"
+    },
+    {
+      "type": "1.15-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.15/joined.tsrg"
+    },
+    {
+      "type": "1.16.1-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16.1/joined.tsrg"
+    },
+    {
+      "type": "1.16.2-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16.2/joined.tsrg"
+    },
+    {
       "type": "1.16.3-forge",
       "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16.3/joined.tsrg"
+    },
+    {
+      "type": "1.16.4-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16.4/joined.tsrg"
+    },
+    {
+      "type": "1.16.5-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16.5/joined.tsrg"
+    },
+    {
+      "type": "1.16-forge",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16/joined.tsrg"
     }
   ],
   "csrg": [
