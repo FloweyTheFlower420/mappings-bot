@@ -21,6 +21,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 class MappingSource {
@@ -40,8 +43,8 @@ public class Main {
             .addTransport(new FileTransport("logs/" + DateTimeFormatter.ofPattern("MM-dd-yyyy_hh-mm-ss").format(ZonedDateTime.now()) + ".log", BetterLogger.DEBUG));
     public static Map<String, MappingsDatabase> db = new HashMap<>();
 
-
     public static void main(String... args) {
+        // downloading meta mappings
         logger.info("Downloading mappings...");
         logger.info("Parsing mappings map");
         Meta meta = null;
@@ -52,29 +55,48 @@ public class Main {
         catch (Exception e) {
             logger.fatal(1, "Cannot obtain main meta file", e);
         }
+        assert meta != null;
 
+        ExecutorService pool = Executors.newFixedThreadPool(32);
+
+        // parse CSRG (Bukkit) Wrappings
         for (MappingSource elem: meta.csrg) {
-            try {
-                logger.info("Parsing " + elem.type + " at " + elem.url);
-                String[] strings = elem.url.split(" ");
-                db.put(elem.type, CsrgParser.parse(
-                        new BufferedReader(new InputStreamReader(new URL(strings[0]).openStream())),
-                        new BufferedReader(new InputStreamReader(new URL(strings[1]).openStream()))
-                ));
-            }
-            catch (Exception e) {
-                logger.error("Unable to parse CSRG mapping", e);
-            }
+            pool.submit(() -> {
+                BetterLogger l = new BetterLogger(logger);
+                l.loggerName += "/" + Thread.currentThread().getName();
+
+                try {
+                    l.info("Parsing " + elem.type + " at " + elem.url);
+                    String[] strings = elem.url.split(" ");
+                    db.put(elem.type, CsrgParser.parse(
+                            new BufferedReader(new InputStreamReader(new URL(strings[0]).openStream())),
+                            new BufferedReader(new InputStreamReader(new URL(strings[1]).openStream()))
+                    ));
+                } catch (Exception e) {
+                    logger.error("Unable to parse CSRG mapping", e);
+                }
+            });
         }
 
+        // parse TSRG (Forge) Wrappings
         for (MappingSource elem: meta.tsrg) {
-            try {
-                logger.info("Parsing " + elem.type + " at " + elem.url);
-                db.put(elem.type, TsrgParser.parse(new BufferedReader(new InputStreamReader(new URL(elem.url).openStream()))));
-            }
-            catch (Exception e) {
-                logger.error("Unable to parse TSRG mapping", e);
-            }
+            pool.submit(() -> {
+                BetterLogger l = new BetterLogger(logger);
+                l.loggerName += "/" + Thread.currentThread().getName();
+
+                try {
+                    l.info("Parsing " + elem.type + " at " + elem.url);
+                    db.put(elem.type, TsrgParser.parse(new BufferedReader(new InputStreamReader(new URL(elem.url).openStream()))));
+                } catch (Exception e) {
+                    logger.error("Unable to parse TSRG mapping", e);
+                }
+            });
+        }
+
+        try {
+            pool.awaitTermination(120, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         logger.info("Starting bot");

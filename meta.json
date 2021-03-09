@@ -61,14 +61,6 @@
       "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16.3/joined.tsrg"
     },
     {
-      "type": "1.16.4-forge",
-      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16.4/joined.tsrg"
-    },
-    {
-      "type": "1.16.5-forge",
-      "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16.5/joined.tsrg"
-    },
-    {
       "type": "1.16-forge",
       "url": "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/1.16/joined.tsrg"
     }
