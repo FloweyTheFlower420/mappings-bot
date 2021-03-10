@@ -44,7 +44,7 @@ public class Main {
             .addTransport(new FileTransport("logs/" + DateTimeFormatter.ofPattern("MM-dd-yyyy_hh-mm-ss").format(ZonedDateTime.now()) + ".log", BetterLogger.DEBUG));
     public static Map<String, MappingsDatabase> db = new ConcurrentHashMap<>();
 
-    private static Map<String, BiFunction<MessageCreateEvent, String[], Integer>> map = new HashMap<String, BiFunction<MessageCreateEvent, String[], Integer>>(){{
+    private static final Map<String, BiFunction<MessageCreateEvent, String[], Integer>> map = new HashMap<String, BiFunction<MessageCreateEvent, String[], Integer>>(){{
         put(
                 "map",
                 (event, args) -> {
@@ -208,7 +208,8 @@ public class Main {
 
         try {
             pool.shutdown();
-            pool.awaitTermination(60, TimeUnit.SECONDS);
+            if(pool.awaitTermination(60, TimeUnit.SECONDS))
+                logger.fatal(-1, "Parsing timeouted!");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -220,6 +221,7 @@ public class Main {
             final DiscordClient client = DiscordClient.create(token);
             final GatewayDiscordClient gateway = client.login().block();
 
+            assert gateway != null;
             gateway.on(MessageCreateEvent.class).subscribe(event -> {
                 String message = event.getMessage().getContent();
                 if (message.startsWith("m!")) {

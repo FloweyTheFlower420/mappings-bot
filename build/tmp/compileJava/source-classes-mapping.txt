@@ -1,0 +1,15 @@
+com/floweytf/mappings/parser/Pair.java
+ com.floweytf.mappings.parser.Pair
+com/floweytf/mappings/parser/MappingsDatabase.java
+ com.floweytf.mappings.parser.MappingsDatabase
+com/floweytf/mappings/parser/MemberMapping.java
+ com.floweytf.mappings.parser.MemberMapping
+com/floweytf/mappings/parser/TsrgParser.java
+ com.floweytf.mappings.parser.TsrgParser
+com/floweytf/mappings/parser/CsrgParser.java
+ com.floweytf.mappings.parser.CsrgParser
+com/floweytf/mappings/Main.java
+ com.floweytf.mappings.Main
+ com.floweytf.mappings.Main$1
+ com.floweytf.mappings.MappingSource
+ com.floweytf.mappings.Meta
