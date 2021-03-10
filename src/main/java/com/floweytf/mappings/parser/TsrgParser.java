@@ -1,18 +1,14 @@
 package com.floweytf.mappings.parser;
 
-import com.floweytf.mappings.Main;
-
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 public class TsrgParser {
     public static MappingsDatabase parse(BufferedReader buffer) throws IOException {
         String currentClass = null;
         MappingsDatabase db = new MappingsDatabase();
 
-        String line = null;
+        String line;
         while ((line = buffer.readLine()) != null) {
             if (!line.startsWith("\t")) {
                 String[] names = line.split(" ");
