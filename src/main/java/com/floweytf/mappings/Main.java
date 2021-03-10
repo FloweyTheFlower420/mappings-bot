@@ -7,11 +7,10 @@ import com.floweytf.mappings.parser.MappingsDatabase;
 import com.floweytf.mappings.parser.MemberMapping;
 import com.floweytf.mappings.parser.TsrgParser;
 import com.google.gson.*;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.hooks.AnnotatedEventManager;
-import net.dv8tion.jda.api.hooks.SubscribeEvent;
+import discord4j.core.DiscordClient;
+import discord4j.core.GatewayDiscordClient;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.entity.channel.MessageChannel;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -21,6 +20,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,115 @@ public class Main {
     public static BetterLogger logger = new BetterLogger("MAPPINGS")
             .addTransport(BetterLogger.stdout)
             .addTransport(new FileTransport("logs/" + DateTimeFormatter.ofPattern("MM-dd-yyyy_hh-mm-ss").format(ZonedDateTime.now()) + ".log", BetterLogger.DEBUG));
-    public static Map<String, MappingsDatabase> db = new HashMap<>();
+    public static Map<String, MappingsDatabase> db = new ConcurrentHashMap<>();
+
+    private static Map<String, BiFunction<MessageCreateEvent, String[], Integer>> map = new HashMap<String, BiFunction<MessageCreateEvent, String[], Integer>>(){{
+        put(
+                "map",
+                (event, args) -> {
+                    final MessageChannel channel = Objects.requireNonNull(event.getMessage().getChannel().block());
+                    String name = args[1];
+                    String mapping = args[2];
+
+                    // get database
+                    MappingsDatabase database = db.get(mapping);
+                    if(database == null) {
+                        channel.createMessage("Unknown mappings");
+                        return 1;
+                    }
+
+                    // split by .
+                    String[] path = name.split("\\.");
+                    String clazz = database.unobf(path[0]);
+                    String classMapping = "Class: `" + path[0] + " -> " + clazz + "`";
+
+
+                    if(path.length == 1) {
+                        channel.createMessage(classMapping);
+                        return 0;
+                    }
+                    else if (path.length == 2) {
+                        List<MemberMapping> members = database.unobfMember(name);
+                        if(members == null) {
+                            channel.createMessage("Unknown mappings");
+                            return 1;
+                        }
+                        StringBuilder builder = new StringBuilder();
+                        for (MemberMapping memberMapping : members)
+                            builder.append("Member: `").append(path[1]).append(" -> ").append(memberMapping.name).append("`").append('\n');
+
+                        channel.createMessage(
+                                classMapping + '\n' +
+                                        builder.toString()
+                        );
+                    }
+                    else
+                        return 3;
+
+                    return 0;
+                }
+        );
+        put(
+                "convert",
+                (event, args) -> {
+                    final MessageChannel channel = Objects.requireNonNull(event.getMessage().getChannel().block());
+
+                    String name = args[1];
+                    String from = args[2];
+                    String to = args[3];
+
+                    // get database
+                    MappingsDatabase fromDatabase = db.get(from);
+                    MappingsDatabase toDatabase = db.get(to);
+
+                    if(fromDatabase == null || toDatabase == null) {
+                        channel.createMessage("Unknown mappings");
+                        return 1;
+                    }
+
+                    if(!from.split("-")[0].equals(to.split("-")[0])) {
+                        channel.createMessage("Unmatched versions");
+                        return 1;
+                    }
+
+                    // split by .
+                    String[] path = name.split("\\.");
+
+                    // obtain reobfusicated mappings
+                    String fromClass = fromDatabase.reobf(path[0]);
+                    String toMapping = toDatabase.unobf(fromClass);
+
+                    String classMapping = "Class: `" + name + " -> " + fromClass + " -> " + toMapping + "`";
+
+                    if(path.length == 1) {
+                        channel.createMessage(classMapping);
+                        return 0;
+                    }
+                    else if (path.length == 2) {
+                        String fromMember = fromDatabase.reobfMember(name);
+                        List<MemberMapping> members = toDatabase.unobfMember(fromMember);
+
+                        if(members == null) {
+                            channel.createMessage("Unknown mappings");
+                            return 1;
+                        }
+                        StringBuilder builder = new StringBuilder();
+                        for (MemberMapping memberMapping : members)
+                            builder.append("Member: `").append(name).append(" -> ").append(fromMember).append(" -> ").append(memberMapping.name).append("`\n");
+
+                        channel.createMessage(
+                                classMapping + '\n' +
+                                        builder.toString()
+                        );
+                    }
+                    else
+                        return 3;
+
+                    return 0;
+                }
+        );
+    }};
+
 
     public static void main(String... args) {
         // downloading meta mappings
@@ -75,6 +184,8 @@ public class Main {
                 } catch (Exception e) {
                     logger.error("Unable to parse CSRG mapping", e);
                 }
+
+                l.info("Done parsing " + elem.type);
             });
         }
 
@@ -90,11 +201,14 @@ public class Main {
                 } catch (Exception e) {
                     logger.error("Unable to parse TSRG mapping", e);
                 }
+
+                l.info("Done parsing " + elem.type);
             });
         }
 
         try {
-            pool.awaitTermination(120, TimeUnit.SECONDS);
+            pool.shutdown();
+            pool.awaitTermination(60, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -102,120 +216,23 @@ public class Main {
         logger.info("Starting bot");
         logger.info("Running with {}", args[0]);
         try {
-            JDA jda = JDABuilder.createDefault(args[0])
-                    .setEventManager(new AnnotatedEventManager())
-                    .addEventListeners(new Main())
-                    .build();
+            final String token = args[0];
+            final DiscordClient client = DiscordClient.create(token);
+            final GatewayDiscordClient gateway = client.login().block();
 
-            // optionally block until JDA is ready
-            jda.awaitReady();
-            logger.info("ready");
+            gateway.on(MessageCreateEvent.class).subscribe(event -> {
+                String message = event.getMessage().getContent();
+                if (message.startsWith("m!")) {
+                    message = message.replace("m!", "");
+                    String[] command = message.split(" ");
+
+                    BiFunction<MessageCreateEvent, String[], Integer> function = map.get(command[0]);
+                    function.apply(event, command);
+                }
+            });
         }
         catch (Exception e) {
             logger.fatal(2, "Unable to create bot", e);
-        }
-    }
-
-    Map<String, BiFunction<MessageReceivedEvent, String[], Integer>> map = new HashMap<String, BiFunction<MessageReceivedEvent, String[], Integer>>(){{
-        put(
-                "map",
-                (event, args) -> {
-                    String name = args[1];
-                    String mapping = args[2];
-
-                    // get database
-                    MappingsDatabase database = db.get(mapping);
-                    if(database == null) {
-                        event.getChannel().sendMessage("Unknown mappings").submit();
-                        return 1;
-                    }
-
-                    // split by .
-                    String[] path = name.split("\\.");
-                    String clazz = database.unobf(path[0]);
-                    String classMapping = "Class: `" + path[0] + " -> " + clazz + "`";
-
-
-                    if(path.length == 1) {
-                        event.getChannel().sendMessage(classMapping).submit();
-                        return 0;
-                    }
-                    else if (path.length == 2) {
-                        List<MemberMapping> members = database.members.get(name);
-                        if(members == null) {
-                            event.getChannel().sendMessage("Unknown mappings").submit();
-                            return 1;
-                        }
-                        StringBuilder builder = new StringBuilder();
-                        for (MemberMapping memberMapping : members)
-                            builder.append("Member: `").append(path[1]).append(" -> ").append(memberMapping.name).append("`").append('\n');
-
-                        event.getChannel().sendMessage(
-                            classMapping + '\n' +
-                            builder.toString()
-                        ).submit();
-                    }
-                    else
-                        return 3;
-
-                    return 0;
-                }
-        );
-        put(
-                "convert",
-                (event, args) -> {
-                    String name = args[1];
-                    String mapping = args[2];
-
-                    // get database
-                    MappingsDatabase database = db.get(mapping);
-                    if(database == null) {
-                        event.getChannel().sendMessage("Unknown mappings").submit();
-                        return 1;
-                    }
-
-                    // split by .
-                    String[] path = name.split("\\.");
-                    String clazz = database.reobf(path[0]);
-                    String classMapping = "Class: `" + path[0] + " -> " + clazz + "`";
-
-
-                    if(path.length == 1) {
-                        event.getChannel().sendMessage(classMapping).submit();
-                        return 0;
-                    }
-                    else if (path.length == 2) {
-                        List<MemberMapping> members = database.members.get(name);
-                        if(members == null) {
-                            event.getChannel().sendMessage("Unknown mappings").submit();
-                            return 1;
-                        }
-                        StringBuilder builder = new StringBuilder();
-                        for (MemberMapping memberMapping : members)
-                            builder.append("Member: `").append(path[1]).append(" -> ").append(memberMapping.name).append("`").append('\n');
-
-                        event.getChannel().sendMessage(
-                                classMapping + '\n' +
-                                        builder.toString()
-                        ).submit();
-                    }
-                    else
-                        return 3;
-
-                    return 0;
-                }
-        );
-    }};
-
-    @SubscribeEvent
-    public void onMsg(MessageReceivedEvent event) {
-        if(event.getMessage().getContentStripped().startsWith("m!")) {
-            String message = event.getMessage().getContentStripped().replaceFirst("m!", "");
-            String[] command = message.split(" ");
-            BiFunction<MessageReceivedEvent, String[], Integer> f = map.get(command[0]);
-            if(f == null)
-                return;
-            f.apply(event, command);
         }
     }
 }
